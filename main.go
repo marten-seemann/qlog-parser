@@ -16,6 +16,8 @@ import (
 	"github.com/marten-seemann/qlog-parser/qlog"
 )
 
+const numWorkers = 128
+
 func main() {
 	if len(os.Args) <= 1 {
 		log.Fatalf("No qlog directory given.")
@@ -32,6 +34,7 @@ func main() {
 }
 
 func process(dir string) error {
+	sem := make(chan struct{}, numWorkers)
 	var done bool
 	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -44,12 +47,20 @@ func process(dir string) error {
 			return nil
 		}
 
-		// done = true
-		err = processQlog(path)
-		if err == io.EOF {
-			return nil
-		}
-		return err
+		sem <- struct{}{}
+
+		go func() {
+			// done = true
+			err = processQlog(path)
+			if err == io.EOF {
+				err = nil
+			}
+			if err != nil {
+				log.Printf("Parsing %s failed: %s\n", path, err)
+			}
+			<-sem
+		}()
+		return nil
 	})
 }
 
