@@ -75,33 +75,37 @@ func processQlog(path string) error {
 	if err != nil {
 		return err
 	}
-	d := qlog.NewDecoder(func(e qlog.Event) {
-		var frames []qlog.Frame
-		switch ev := e.Details.(type) {
-		case *qlog.EventPacketReceived:
-			frames = ev.Frames
-		case *qlog.EventPacketSent:
-			frames = ev.Frames
-		case *qlog.EventConnectionStarted:
-			// fmt.Printf("Connection from %s to %s.\n", ev.Src.String(), ev.Dest.String())
-			return
-		default:
-			return
-		}
-		if len(frames) == 0 {
-			return
-		}
-		for _, f := range frames {
-			if ccf, ok := f.(*qlog.ConnectionCloseFrame); ok {
-				if (ccf.ErrorSpace == "application" && ccf.RawErrorCode == 0) ||
-					(ccf.ErrorSpace == "transport" && ccf.RawErrorCode == 0xc) ||
-					(ccf.ErrorSpace == "transport" && ccf.RawErrorCode == 0x15a) ||
-					(ccf.ErrorSpace == "transport" && ccf.RawErrorCode == 0x12a) {
-					continue
+	eventChan := make(chan qlog.Event, 100)
+	go func() {
+		for e := range eventChan {
+			var frames []qlog.Frame
+			switch ev := e.Details.(type) {
+			case *qlog.EventPacketReceived:
+				frames = ev.Frames
+			case *qlog.EventPacketSent:
+				frames = ev.Frames
+			case *qlog.EventConnectionStarted:
+				// fmt.Printf("Connection from %s to %s.\n", ev.Src.String(), ev.Dest.String())
+				continue
+			default:
+				continue
+			}
+			if len(frames) == 0 {
+				continue
+			}
+			for _, f := range frames {
+				if ccf, ok := f.(*qlog.ConnectionCloseFrame); ok {
+					if (ccf.ErrorSpace == "application" && ccf.RawErrorCode == 0) ||
+						(ccf.ErrorSpace == "transport" && ccf.RawErrorCode == 0xc) ||
+						(ccf.ErrorSpace == "transport" && ccf.RawErrorCode == 0x15a) ||
+						(ccf.ErrorSpace == "transport" && ccf.RawErrorCode == 0x12a) {
+						continue
+					}
+					fmt.Printf("%s: %#v\n", path, ccf)
 				}
-				fmt.Printf("%s: %#v\n", path, ccf)
 			}
 		}
-	})
+	}()
+	d := qlog.NewDecoder(eventChan)
 	return d.Decode(bufio.NewReader(gz))
 }

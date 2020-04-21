@@ -11,12 +11,12 @@ import (
 
 // A Decoder decodes a qlog
 type Decoder struct {
-	eventCallback func(Event)
+	eventChan chan<- Event
 }
 
 // NewDecoder creates a new decoder
-func NewDecoder(cb func(Event)) *Decoder {
-	return &Decoder{eventCallback: cb}
+func NewDecoder(c chan<- Event) *Decoder {
+	return &Decoder{eventChan: c}
 }
 
 // Decode decodes the qlog
@@ -135,7 +135,7 @@ func (e *events) UnmarshalJSONArray(dec *gojay.Decoder) error {
 	if err := dec.Array(&ev); err != nil {
 		return err
 	}
-	e.trace.decoder.eventCallback(ev)
+	e.trace.decoder.eventChan <- ev
 	return nil
 }
 
