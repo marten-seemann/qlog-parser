@@ -59,6 +59,7 @@ func processQlog(path string) error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 	gz, err := gzip.NewReader(f)
 	if err != nil {
 		return err
