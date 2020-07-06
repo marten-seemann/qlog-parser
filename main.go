@@ -43,7 +43,8 @@ func process(dir string) error {
 		if done {
 			return nil
 		}
-		if info.IsDir() || !strings.HasSuffix(info.Name(), "qlog.gz") {
+		if info.IsDir() ||
+			(!strings.HasSuffix(info.Name(), "qlog.gz") && !strings.HasSuffix(info.Name(), ".qlog")) {
 			return nil
 		}
 
@@ -71,9 +72,16 @@ func processQlog(path string) error {
 		return err
 	}
 	defer f.Close()
-	gz, err := gzip.NewReader(f)
-	if err != nil {
-		return err
+
+	var src io.Reader
+	if strings.HasSuffix(path, ".gz") {
+		gz, err := gzip.NewReader(bufio.NewReader(f))
+		if err != nil {
+			return err
+		}
+		src = gz
+	} else {
+		src = bufio.NewReader(f)
 	}
 	eventChan := make(chan qlog.Event, 100)
 	go func() {
@@ -107,5 +115,5 @@ func processQlog(path string) error {
 		}
 	}()
 	d := qlog.NewDecoder(eventChan)
-	return d.Decode(bufio.NewReader(gz))
+	return d.Decode(src)
 }
