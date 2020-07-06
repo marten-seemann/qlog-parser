@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	_ "net/http/pprof"
 
@@ -35,13 +36,10 @@ func main() {
 
 func process(dir string) error {
 	sem := make(chan struct{}, numWorkers)
-	var done bool
-	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	var wg sync.WaitGroup
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
-		}
-		if done {
-			return nil
 		}
 		if info.IsDir() ||
 			(!strings.HasSuffix(info.Name(), "qlog.gz") && !strings.HasSuffix(info.Name(), ".qlog")) {
@@ -49,20 +47,27 @@ func process(dir string) error {
 		}
 
 		sem <- struct{}{}
+		wg.Add(1)
 
 		go func() {
-			// done = true
-			err = processQlog(path)
-			if err == io.EOF {
-				err = nil
-			}
-			if err != nil {
+			defer func() {
+				<-sem
+				wg.Done()
+			}()
+			if err := processQlog(path); err != nil {
+				if err == io.EOF {
+					err = nil
+				}
 				log.Printf("Parsing %s failed: %s\n", path, err)
 			}
-			<-sem
 		}()
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+	wg.Wait()
+	return nil
 }
 
 func processQlog(path string) error {
