@@ -44,8 +44,11 @@ func (e *EventConnectionStarted) NKeys() int { return 0 }
 
 // EventPacketSent it the packet_sent event
 type EventPacketSent struct {
-	Header Header
-	Frames []Frame
+	PacketType  string
+	Header      Header
+	IsCoalesced bool
+	Frames      []Frame
+	Trigger     string
 }
 
 // UnmarshalJSONObject unmarshals the packet_sent event
@@ -62,6 +65,12 @@ func (e *EventPacketSent) UnmarshalJSONObject(dec *gojay.Decoder, key string) er
 		}
 	case "header":
 		return dec.Object(&e.Header)
+	case "is_coalesced":
+		return dec.Bool(&e.IsCoalesced)
+	case "packet_type":
+		return dec.String(&e.PacketType)
+	case "trigger":
+		return dec.String(&e.Trigger)
 	}
 	return nil
 }
@@ -71,8 +80,11 @@ func (e *EventPacketSent) NKeys() int { return 0 }
 
 // EventPacketReceived it the packet_received event
 type EventPacketReceived struct {
-	Header Header
-	Frames []Frame
+	PacketType  string
+	Header      Header
+	IsCoalesced bool
+	Frames      []Frame
+	Trigger     string
 }
 
 // UnmarshalJSONObject unmarshals the packet_received event
@@ -89,6 +101,12 @@ func (e *EventPacketReceived) UnmarshalJSONObject(dec *gojay.Decoder, key string
 		}
 	case "header":
 		return dec.Object(&e.Header)
+	case "is_coalesced":
+		return dec.Bool(&e.IsCoalesced)
+	case "packet_type":
+		return dec.String(&e.PacketType)
+	case "trigger":
+		return dec.String(&e.Trigger)
 	}
 	return nil
 }
