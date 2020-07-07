@@ -43,3 +43,39 @@ func (f *ConnectionCloseFrame) UnmarshalJSONObject(dec *gojay.Decoder, key strin
 	}
 	return nil
 }
+
+// NewConnectionIDFrame is a NEW_CONNECTION_ID frame
+type NewConnectionIDFrame struct {
+	SequenceNumber      uint64
+	RetirePriorTo       uint64
+	StatelessResetToken string
+	ConnectionID        string
+}
+
+// UnmarshalJSONObject unmarshals the NEW_CONNECTION_ID frame
+func (f *NewConnectionIDFrame) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
+	switch key {
+	case "sequence_number":
+		return dec.Uint64(&f.SequenceNumber)
+	case "retire_prior_to":
+		return dec.Uint64(&f.RetirePriorTo)
+	case "connection_id":
+		return dec.String(&f.ConnectionID)
+	case "stateless_reset_token":
+		return dec.String(&f.StatelessResetToken)
+	}
+	return nil
+}
+
+// RetireConnectionIDFrame is RETIRE_CONNECTION_ID frame
+type RetireConnectionIDFrame struct {
+	SequenceNumber uint64
+}
+
+// UnmarshalJSONObject unmarshals the RETIRE_CONNECTION_ID frame
+func (f *RetireConnectionIDFrame) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
+	if key == "sequence_number" {
+		return dec.Uint64(&f.SequenceNumber)
+	}
+	return nil
+}

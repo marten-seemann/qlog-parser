@@ -209,7 +209,7 @@ type frame struct {
 func (f *frame) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
 	if f.Frame != nil {
 		switch f.Frame.(type) {
-		case *CryptoFrame, *ConnectionCloseFrame:
+		case *CryptoFrame, *ConnectionCloseFrame, *NewConnectionIDFrame, *RetireConnectionIDFrame:
 			return f.Frame.UnmarshalJSONObject(dec, key)
 		default:
 			panic("unexpected frame type")
@@ -229,6 +229,10 @@ func (f *frame) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
 			f.Frame = &CryptoFrame{}
 		case "connection_close":
 			f.Frame = &ConnectionCloseFrame{}
+		case "new_connection_id":
+			f.Frame = &NewConnectionIDFrame{}
+		case "retire_connection_id":
+			f.Frame = &RetireConnectionIDFrame{}
 		}
 	}
 	f.processedFirstKey = true
