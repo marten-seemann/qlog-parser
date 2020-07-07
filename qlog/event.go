@@ -44,6 +44,7 @@ func (e *EventConnectionStarted) NKeys() int { return 0 }
 
 // EventPacketSent it the packet_sent event
 type EventPacketSent struct {
+	Header Header
 	Frames []Frame
 }
 
@@ -59,6 +60,8 @@ func (e *EventPacketSent) UnmarshalJSONObject(dec *gojay.Decoder, key string) er
 		for i, f := range frames {
 			e.Frames[i] = f.Frame
 		}
+	case "header":
+		return dec.Object(&e.Header)
 	}
 	return nil
 }
@@ -68,6 +71,7 @@ func (e *EventPacketSent) NKeys() int { return 0 }
 
 // EventPacketReceived it the packet_received event
 type EventPacketReceived struct {
+	Header Header
 	Frames []Frame
 }
 
@@ -83,6 +87,8 @@ func (e *EventPacketReceived) UnmarshalJSONObject(dec *gojay.Decoder, key string
 		for i, f := range frames {
 			e.Frames[i] = f.Frame
 		}
+	case "header":
+		return dec.Object(&e.Header)
 	}
 	return nil
 }
