@@ -181,6 +181,8 @@ func (e *Event) unmarshalJSONArray(dec *gojay.Decoder) error {
 			ev = &EventPacketSent{}
 		case "packet_received":
 			ev = &EventPacketReceived{}
+		case "packet_lost":
+			ev = &EventPacketLost{}
 		case "":
 			return errors.New("found data before event name")
 		default:

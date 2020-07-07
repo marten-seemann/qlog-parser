@@ -126,3 +126,26 @@ func (f *frames) UnmarshalJSONArray(dec *gojay.Decoder) error {
 	}
 	return nil
 }
+
+// EventPacketLost is the packet_lost event
+type EventPacketLost struct {
+	PacketType   string
+	PacketNumber uint64
+	Trigger      string
+}
+
+// UnmarshalJSONObject unmarshals the packet_lost event
+func (e *EventPacketLost) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
+	switch key {
+	case "packet_type":
+		return dec.String(&e.PacketType)
+	case "packet_number":
+		return dec.Uint64(&e.PacketNumber)
+	case "trigger":
+		return dec.String(&e.Trigger)
+	}
+	return nil
+}
+
+// NKeys is the number of keys
+func (e *EventPacketLost) NKeys() int { return 0 }
