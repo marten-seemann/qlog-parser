@@ -209,3 +209,33 @@ func (e *EventMetricsUpdated) UnmarshalJSONObject(dec *gojay.Decoder, key string
 
 // NKeys is the number of keys
 func (e *EventMetricsUpdated) NKeys() int { return 0 }
+
+// EventLossTimerUpdated is the loss_timer_updated event
+type EventLossTimerUpdated struct {
+	EventType         string
+	TimerType         string
+	PacketNumberSpace string
+	Delta             time.Duration
+}
+
+// UnmarshalJSONObject unmarshals the loss_timer_updated event
+func (e *EventLossTimerUpdated) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
+	switch key {
+	case "event_type":
+		return dec.String(&e.EventType)
+	case "timer_type":
+		return dec.String(&e.TimerType)
+	case "packet_number_space":
+		return dec.String(&e.PacketNumberSpace)
+	case "delta":
+		dur, err := parseDuration(dec)
+		if err != nil {
+			return err
+		}
+		e.Delta = dur
+	}
+	return nil
+}
+
+// NKeys is the number of keys
+func (e *EventLossTimerUpdated) NKeys() int { return 0 }
