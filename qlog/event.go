@@ -139,7 +139,7 @@ func (f *frames) UnmarshalJSONArray(dec *gojay.Decoder) error {
 // EventPacketLost is the packet_lost event
 type EventPacketLost struct {
 	PacketType   string
-	PacketNumber uint64
+	PacketNumber int64
 	Trigger      string
 }
 
@@ -149,7 +149,7 @@ func (e *EventPacketLost) UnmarshalJSONObject(dec *gojay.Decoder, key string) er
 	case "packet_type":
 		return dec.String(&e.PacketType)
 	case "packet_number":
-		return dec.Uint64(&e.PacketNumber)
+		return dec.Int64(&e.PacketNumber)
 	case "trigger":
 		return dec.String(&e.Trigger)
 	}
