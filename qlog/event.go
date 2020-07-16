@@ -2,9 +2,18 @@ package qlog
 
 import (
 	"net"
+	"time"
 
 	"github.com/francoispqt/gojay"
 )
+
+func parseDuration(dec *gojay.Decoder) (time.Duration, error) {
+	var val float64
+	if err := dec.Float64(&val); err != nil {
+		return 0, err
+	}
+	return time.Duration(val*1e6) * time.Nanosecond, nil
+}
 
 type unimplementedEvent struct{}
 
@@ -149,3 +158,54 @@ func (e *EventPacketLost) UnmarshalJSONObject(dec *gojay.Decoder, key string) er
 
 // NKeys is the number of keys
 func (e *EventPacketLost) NKeys() int { return 0 }
+
+// EventMetricsUpdated is the metrics_updated event
+type EventMetricsUpdated struct {
+	PTOCount         *uint32
+	LatestRTT        *time.Duration
+	SmoothedRTT      *time.Duration
+	MinRTT           *time.Duration
+	RTTVariance      *time.Duration
+	CongestionWindow uint64
+	BytesInFlight    uint64
+}
+
+// UnmarshalJSONObject unmarshals the metrics_updated event
+func (e *EventMetricsUpdated) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
+	switch key {
+	case "pto_count":
+		return dec.Uint32Null(&e.PTOCount)
+	case "latest_rtt":
+		dur, err := parseDuration(dec)
+		if err != nil {
+			return err
+		}
+		e.LatestRTT = &dur
+	case "smoothed_rtt":
+		dur, err := parseDuration(dec)
+		if err != nil {
+			return err
+		}
+		e.SmoothedRTT = &dur
+	case "min_rtt":
+		dur, err := parseDuration(dec)
+		if err != nil {
+			return err
+		}
+		e.MinRTT = &dur
+	case "rtt_variance":
+		dur, err := parseDuration(dec)
+		if err != nil {
+			return err
+		}
+		e.RTTVariance = &dur
+	case "congestion_window":
+		return dec.Uint64(&e.CongestionWindow)
+	case "bytes_in_flight":
+		return dec.Uint64(&e.BytesInFlight)
+	}
+	return nil
+}
+
+// NKeys is the number of keys
+func (e *EventMetricsUpdated) NKeys() int { return 0 }
