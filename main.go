@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"compress/gzip"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -20,7 +21,10 @@ import (
 const numWorkers = 128
 
 func main() {
-	if len(os.Args) <= 1 {
+	role := flag.String("role", "", "client / server / <emtpy>")
+	flag.Parse()
+
+	if len(flag.Args()) < 1 {
 		log.Fatalf("No qlog directory given.")
 	}
 
@@ -28,13 +32,21 @@ func main() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	qlogDir := os.Args[1]
-	if err := process(qlogDir); err != nil {
+	qlogDir := flag.Arg(0)
+	if err := process(qlogDir, *role); err != nil {
 		log.Fatalf("Processing failed: %s", err)
 	}
 }
 
-func process(dir string) error {
+func process(dir string, role string) error {
+	var onlyClient, onlyServer bool
+	if role == "client" {
+		onlyClient = true
+	}
+	if role == "server" {
+		onlyServer = true
+	}
+
 	sem := make(chan struct{}, numWorkers)
 	var wg sync.WaitGroup
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -43,6 +55,12 @@ func process(dir string) error {
 		}
 		if info.IsDir() ||
 			(!strings.HasSuffix(info.Name(), "qlog.gz") && !strings.HasSuffix(info.Name(), ".qlog")) {
+			return nil
+		}
+		if onlyClient && !strings.Contains(info.Name(), "client") {
+			return nil
+		}
+		if onlyServer && !strings.Contains(info.Name(), "server") {
 			return nil
 		}
 
